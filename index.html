@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas & Colors</title>
+    <style>
+        #links {
+            position: fixed;
+            margin-top: 10px;
+        }
+
+        a {
+            background-color: #333;
+            color: #ffc400;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <a href="index.html"
+        style="left: 0; top: 0; position: fixed; background-color: #252525; padding: 5px;color: white; border-radius: 5px; font-size: larger; margin: 5px;">Go
+        back</a> -->
+        <div id="links">
+            <a href="Responsive Balls.html">Balls</a>
+            <br>
+            <br>
+            <a href="Color Balls.html">Color Balls</a>
+            <br>
+            <br>
+            <a href="Madlines.html">Mad lines</a>
+            <br>
+            <br>
+            <a href="Madlines Curve.html">My Handwriting</a>
+        </div>
+    <canvas></canvas>
+    <script defer>
+
+        let canvas = document.querySelector('canvas');
+        let c = canvas.getContext('2d')
+
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', function () {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createCircles();
+        })
+
+        const getRandomRGB = () => `rgb(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)})`;
+        const getRandomNumberInRange = (min, max) => Math.floor((Math.random() * max ) + min);
+        function Cirlce(x, y, radius, dx, dy, color) {
+            this.x = x;
+            this.y = y;
+            this.dx = dx;
+            this.dy = dy;
+            this.radius = radius;
+            this.color = color;
+            this.minRadius = radius;
+
+            this.draw = function () {
+                c.strokeStyle = color;
+                c.fillStyle = color;
+                c.beginPath()
+                c.lineWidth = 1;
+                c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+                c.stroke();
+                // c.fill();
+            }
+
+            this.update = function () {
+                if ((this.x + this.radius) > window.innerWidth || (this.x - this.radius) < 0) {
+                    this.dx = -this.dx;
+                }
+                this.x += this.dx;
+                if ((this.y + this.radius) > window.innerHeight || (this.y - this.radius) < 0) {
+                    this.dy = -this.dy;
+                }
+                this.y += this.dy;
+
+                this.draw();
+            }
+        }
+
+        let mouse = {
+            x: undefined,
+            y: undefined,
+        }
+
+        window.addEventListener('mousemove', function (event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        let circles = [];
+
+        function createCircles() {
+            circles = [];
+            for (let counter = 0; counter < 250; counter++) {
+                let radius = getRandomNumberInRange(10,30);
+                let x = Math.random() * (window.innerWidth - (radius * 2) + radius);
+                let dx = (Math.random() - 0.5) * 10;
+                let y = Math.random() * (window.innerHeight - (radius * 2) + radius);
+                let dy = (Math.random() - 0.5) * 10;
+                let red = Math.random() * 255;
+                let green = Math.random() * 255;
+                let blue = Math.random() * 255;
+                let color = getRandomRGB()
+                circles.push(new Cirlce(x, y, radius, dx, dy, color));
+            }
+        }
+
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+            c.clearRect(0, 0, window.innerWidth, innerHeight);
+            for (let counter = 0; counter < circles.length; counter++) {
+                circles[counter].update();
+            }
+        }
+
+        createCircles();
+        animate();
+    </script>
+</body>
+
+</html>
