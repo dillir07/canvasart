@@ -64,7 +64,10 @@
             let iter = window.setInterval(drawLine, 200);
           }
 
-        initDrawLine();
+        initDrawLine();          var link = document.createElement('meta');
+          link.setAttribute('name', 'theme-color');
+          link.content = `rgb(${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)})`;
+          document.getElementsByTagName('head')[0].appendChild(link);
     </script>
 </body>
 
