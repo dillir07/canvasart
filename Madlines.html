@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mad Lines</title>
+</head>
+
+<body>
+    <a href="index.html"
+        style="left: 0; top: 0; position: fixed; background-color: #252525; padding: 5px;color: white; border-radius: 5px; font-size: larger; margin: 5px;">Go
+        back</a>
+    <canvas></canvas>
+    <script defer>
+
+        let canvas = document.querySelector('canvas');
+        let c = canvas.getContext('2d')
+
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', function () {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initDrawLine();
+        })
+
+        const getRandomRGB = () => `rgb(${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)},${Math.floor(Math.random() * 255)})`;
+        const getRandomNumberInRange = (min, max) => Math.floor((Math.random() * max) + min);
+
+        let prev_x;
+        let prev_y;
+
+        function drawLine() {
+            c.beginPath();
+            c.moveTo(prev_x, prev_y);
+            x = getRandomNumberInRange(0, canvas.width);
+            y = getRandomNumberInRange(0, canvas.height);
+            c.strokeStyle = getRandomRGB();
+            c.lineTo(x, y);
+            prev_x = x;
+            prev_y = y;
+            c.lineWidth = 3;
+            c.stroke();
+            c.closePath();
+        }
+
+        function initDrawLine() {
+            let x = getRandomNumberInRange(0, canvas.width);
+            let y = getRandomNumberInRange(0, canvas.height);
+            c.beginPath();
+            c.moveTo(x, y);
+            x = getRandomNumberInRange(0, canvas.width);
+            y = getRandomNumberInRange(0, canvas.height);
+            c.lineTo(x, y);
+            prev_x = x;
+            prev_y = y;
+            c.strokeStyle = getRandomRGB();
+            c.lineWidth = 3;
+            c.stroke();
+            c.closePath();
+            let iter = window.setInterval(drawLine, 200);
+          }
+
+        initDrawLine();
+    </script>
+</body>
+
+</html>
