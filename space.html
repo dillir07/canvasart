@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hyperspace</title>
+        <style>
+            html,
+            body {
+                margin: 0px;
+            }
+
+        </style>
+    </head>
+
+    <body bgcolor="black">
+        <a href="index.html"
+           style="left: 0; top: 0; position: fixed; background-color: #252525; padding: 5px;color: white; border-radius: 5px; font-size: larger; margin: 5px;">Go
+            back</a>
+        <canvas></canvas>
+        <script>
+            const canvas = document.querySelector("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 5;
+
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+
+            /**
+             * calculate the center of the screen and create stars array.
+             */
+            function init() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                centerX = canvas.width / 2;
+                centerY = canvas.height / 2;
+                createStars();
+            }
+
+            /**
+             * The maximum is exclusive and the minimum is inclusive
+             * @param {number} min
+             * @param {number} max
+             * @returns {number}
+             */
+            function getRandomInt(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min) + min);
+            }
+
+            const starColors = [
+                `rgba(204, 238, 255,${Math.random()})`,
+                `rgba(204, 255, 255,${Math.random()})`,
+                `rgba(255, 255, 255,1)`,
+            ];
+            const NUMBER_OF_STARS = 900;
+            let speed = 20;
+            let accelerationRate = speed + 1;
+            let cruisingSpeed = speed - accelerationRate;
+
+            /**
+             * @param {number} x
+             * @param {number} y
+             * @param {number} radius
+             * @param {number} slope
+             * @param {number} direction
+             * @param {string} color
+             */
+            function Star(x, y, radius, slope, direction, color) {
+                this.x = x;
+                this.y = y;
+                this.slope = slope;
+                this.direction = direction;
+                this.radius = radius;
+                this.color = color;
+                this.minRadius = radius;
+
+                /**
+                 * draw the arc to represent the Star with defined x,y and radius @see {Star}
+                 */
+                this.draw = function () {
+                    ctx.strokeStyle = color;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                    ctx.stroke();
+                    ctx.fill();
+                };
+            }
+
+            /** @type {Star[]} */
+            let stars = [];
+
+            /**
+             * find the slope of given line i.e., where line will be the path of a Star @see {Star}
+             * The formula for slope is raise/run i.e.,
+             * refer: https://www.mathsisfun.com/geometry/slope.html
+             * @param {number} x
+             * @param {number} y
+             * @returns {[number, number]} slope & direction
+             */
+            function slopeFromCenter(x, y) {
+                let x1 = x;
+                let y1 = y;
+                let x2 = centerX;
+                let y2 = centerY;
+                let q = null; // Quadrant
+                let direction = 1;
+
+                if (x > centerX && y <= centerY) {
+                    q = "Q1";
+                } else if (x <= centerX && y <= centerY) {
+                    q = "Q2";
+                } else if (x <= centerX && y > centerY) {
+                    q = "Q3";
+                } else if (x > centerX && y > centerY) {
+                    q = "Q4";
+                }
+
+                if (q == "Q2" || q == "Q3") {
+                    direction = -1;
+                }
+
+                return [(y2 - y1) / (x2 - x1), direction];
+            }
+
+            console.table({ x: centerX, y: centerY });
+
+            /**
+             * Creates @see {NUMBER_OF_STARS} Stars
+             */
+            function createStars() {
+                for (let counter = 0; counter < NUMBER_OF_STARS; counter++) {
+                    let radius = getRandomInt(1, 2);
+                    let x = getRandomInt(radius, canvas.width - radius);
+                    let y = getRandomInt(radius, canvas.height - radius);
+                    let color = starColors[getRandomInt(0, starColors.length)];
+                    let slopeAndDirection = slopeFromCenter(x, y);
+                    stars.push(
+                        new Star(x, y, radius, slopeAndDirection[0], slopeAndDirection[1], color)
+                    );
+                }
+            }
+
+            /**
+             * Calculate next location for given star
+             * @param {*} currentX
+             * @param {*} currentY
+             * @param {*} m - slope
+             * @param {*} velocity
+             * @returns {[number,number]} - new co-ordinates for the star
+             * refer: https://math.stackexchange.com/questions/656500/given-a-point-slope-and-a-distance-along-that-slope-easily-find-a-second-p
+             */
+            function nextStop(currentX, currentY, m, velocity) {
+                let s = velocity / Math.sqrt(1 + m * m);
+                let newX = currentX + s;
+                let newY = currentY + m * s;
+                return [Math.ceil(newX), Math.ceil(newY)];
+            }
+
+            /**
+             * calculates the position of each star in stars array
+             * if a star is out of viewport, respawn it in a random location so it will be treated as new star.
+             */
+            function jump() {
+                let velocity = 0;
+                if (cruisingSpeed < speed) {
+                    velocity = cruisingSpeed;
+                    cruisingSpeed += 1;
+                } else {
+                    velocity = speed;
+                }
+                for (let counter = 0; counter < stars.length; counter++) {
+                    /** @type {Star} */
+                    const star = stars[counter];
+                    if (
+                        star.x <= 0 ||
+                        star.x > canvas.width ||
+                        star.y <= 0 ||
+                        star.y > canvas.height
+                    ) {
+                        star.x = Math.ceil(
+                            Math.random() * (window.innerWidth - star.radius * 2 + star.radius)
+                        );
+                        star.y = Math.ceil(
+                            Math.random() * (window.innerHeight - star.radius * 2 + star.radius)
+                        );
+                        const slopeAndDirection = slopeFromCenter(star.x, star.y);
+                        star.slope = slopeAndDirection[0];
+                        star.direction = slopeAndDirection[1];
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(star.x, star.y);
+                    const nextStopPoints = nextStop(
+                        star.direction * star.x,
+                        star.direction * star.y,
+                        star.slope,
+                        velocity
+                    );
+                    const newX = nextStopPoints[0];
+                    const newY = nextStopPoints[1];
+                    ctx.lineTo(star.direction * newX, star.direction * newY);
+                    ctx.strokeStyle = star.color;
+                    ctx.lineWidth = star.radius * 2;
+                    ctx.stroke();
+                    ctx.closePath();
+                    star.x = star.direction * newX;
+                    star.y = star.direction * newY;
+                }
+            }
+
+            function stop() {
+                ctx.clearRect(0, 0, window.innerWidth, innerHeight);
+                cruisingSpeed = speed - accelerationRate;
+                if (cruisingSpeed < 0) cruisingSpeed = 0; // no negative cruisingSpeed
+                speed = 20; // reset speed
+                for (let counter = 0; counter < stars.length; counter++) {
+                    stars[counter].draw();
+                }
+            }
+
+            let travel = null;
+            function animate() {
+                travel = requestAnimationFrame(animate);
+                ctx.fillStyle = "rgba(0,0,0,0.1)";
+                ctx.fillRect(0, 0, window.innerWidth, innerHeight);
+                jump();
+            }
+
+            createStars();
+            stars.forEach((star) => {
+                star.draw();
+            });
+
+            let turnRate = speed;
+            let speedRate = 5;
+            // debugger;
+            window.addEventListener("keypress", function (event) {
+                console.log(event.key);
+
+                if (event.key === "-" && speed > 0) {
+                    speed -= speedRate;
+                    if (speed < 5) {
+                        window.cancelAnimationFrame(travel);
+                        travel = null;
+                        stop();
+                    }
+                }
+                if ((event.key === "=" || event.key === "+") && speed < 100) {
+                    // plus key
+                    speed += speedRate;
+                    if (travel == null) {
+                        travel = window.requestAnimationFrame(animate);
+                    }
+                }
+                console.log(centerX, centerY);
+                if (event.key === " ") {
+                    if (travel == null) {
+                        travel = window.requestAnimationFrame(animate);
+                    } else {
+                        window.cancelAnimationFrame(travel);
+                        travel = null;
+                        stop();
+                    }
+                }
+            });
+
+            window.addEventListener("resize", init);
+
+        </script>
+    </body>
+
+</html>
